@@ -1,0 +1,117 @@
+---
+title: "Anexos"
+author: 'Guilherme NºUSP: 8943160 e Leonardo NºUSP:9793436'
+header-includes:
+   - \usepackage{ragged2e}
+output: pdf_document
+---
+
+# Exercício 1
+
+(LearnBayes) Considere o experimento de lançamento de uma moeda, em que $\theta$ representa a probabilidade de Cara. Para estimar esse parâmetro você deve construir uma distribuição a priori baseando no método do histograma, dividindo o intervalo [0, 1] em dez subintervalos de comprimento
+0.1. Para cada subintervalo atribua valores de probabilidade que achar adequados. Agora realize o experimento, lançando a moeda 20 vezes e anote o resultado.
+
+## Item a) 
+Obtenha a distribuiçãao *a posteriori*.
+\center
+```{r, out.width = '70%' }
+library(LearnBayes)
+midpt <- seq(0.05, 0.95, by = 0.1) # vetor de pontos médios dos intervalos
+prior <- rep(1,10) # Valores a priori(Dist. Uniforme(0,1))
+prior <- prior/sum(prior) # Normalização
+p <- seq(0, 1, length = 500) # grade de valores de p no intervalo (0,1) 
+curve(histprior(x,midpt,prior), from=0, to=1, ylab="Densidade a Priori",ylim=c(0,.3))
+obs <- c(1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1) # Valores observados de caras
+s <- sum(obs) # Soma dos valores observados de caras
+
+f <-20-s # oma dos valores observados de coroas
+
+curve(histprior(x,midpt,prior) * dbeta(x,s+1,f+1), from=0, to=1, ylab="Densidade a Posteriori") 
+
+```
+\justify
+
+## Item b)
+Simule da distribuição *a posteriori* e apresente o histograma desses valores simulados, considerando os subintervalos definidos anteriormente. [Considere as funçõoes *histprior* e *sample*].
+\center
+```{r, out.width = '70%' }
+like <- dbeta(p, s+1, f+1) # Verossimilhança
+post <- histprior(p, midpt, prior) * like # Posteriori
+post <- post/sum(post) # Probabilidades a posteriori
+ps <- sample(p, replace = TRUE, prob = post)
+hist(ps, xlab="p", main="" ,breaks=30) # Histograma simulado
+```
+\justify
+
+## Item c
+Faça comentários a respeito das mudanças observadas na sua crença *a priori*, após a observação do resultado experimental.
+
+Supomos como priori a distribuição uniforme(0,1), pois não tinhamos informações sobre o experimento, porém depois do experimento conseguimos notar uma significativa mudança nas probabilidades a posteriori, sendo assim, acreditamos estar mais próximos da verdadeira probabilidade de sair cara.
+
+# Exercício 12
+
+Um estudo foi realizado com o interesse em conhecer a proporção de estudantes que concluem o ensino médio em determinada população. Sem muito conhecimento *a priori* sobre essa população você decide atribuir uma priori *Beta(1, 1)* para essa quantidade ($\theta$). Um resultado experimental indicou que 22 crianças, amostradas dessa população, terminaram a ensino médio e 7 não concluíram.
+
+## Item a)
+Usando o programa **R** desenhe as densidades *a priori* e *a posteriori* para $\theta$, em uma mesma janela gráfica. [Use cores ou padrões diferentes nas duas curvas para distinguir melhor. Seu gráfico deve ter um título e legenda que permita saber qual curva corresponde a qual densidade.]
+\center
+```{r, out.width = '70%', echo=F }
+p <- seq(0, 1, length = 500)
+a <- 1 # Primeiro parâmento da beta
+b <- 1 # Segundo parâmento da beta
+s <- 22 # Sucessos
+f <- 7 # Fracassos 
+prior <- dbeta(p,a,b) # Priori
+like <- dbeta(p,s+1,f+1) # Verossimilhança
+post <- dbeta(p,a+s,b+f) # Posteriori
+
+# Gráficos
+curve(dbeta(x,a,b),ylim=c(0,5), from=0, to=1, ylab="Densidade a Posteriori",xlab=expression(theta))
+curve(dbeta(x,a+s,b+f),ylim=c(0,5),lwd=2,col=1,ylim=c(0,0.09),lty=2,add = T)
+a<-c("Priori ","Posteriori")
+legend("topleft",a,lwd=2,lty=c(1,2),bty="n",cex=1.3)
+
+```
+\justify
+
+## Item b)
+Use a função *qbeta* para obter um intervalo *a posteriori* de probabilidade 0.9 para $\theta$.
+
+Do exercício anterior sabemos que a distribuição *a posteriori* é *Beta (23,8)*
+``` {r}
+qbeta(c(0.05,0.95),23,8) # Intevalo de credibilidade com 0.9
+```
+
+## Item c)
+Apresente uma tabela com as médias e desvio-padrões *a priori* e *a posteriori* para $\theta$. Inclua também os intervalos de probabilidade 0.9.
+```{r}
+
+```
+
+## Item d)
+Use a função *pbeta* para obter $\mathbb{P}(\theta > 0.6 | x)$
+```{r}
+1-pbeta(0.6,23,8) # Probabilidade do theta superar 0.6
+```
+
+## Item e)
+Use a função *rbeta* para obter uma amostra simulada de tamanho 1000 da distribuição a posteriori. Desenhe o histograma dessa amostra simulada.
+\center
+```{r, out.width = '70%'}
+ps <- rbeta(1000,23,8) # simulação
+hist(ps, probability = T, xlab = "p", main = "Histograma simulado",
+     ylab="Densidade de Frequência", breaks = 30)
+```
+\justify
+## Item f)
+Considere agora mais 10 crianças dessa mesma população. Encontre a probabilidade preditiva de que 9 ou 10 delas concluam o ensino médio. [Use a amostra simulada no item anterior e a função *rbinom* para obter uma amostra simulada da distribuição preditiva.]
+
+Seja Y igual ao número de crianças que concluem o ensino médio.
+Queremos calcular $\mathbb{P}(Y=9 | x)+\mathbb{P}(Y=10 | x)$ = 0.272
+```{r}
+y <- rbinom(1000, 10, ps)
+freq <- table(y)
+predprob <- freq/sum(freq)
+Prob <- predprob[predprob=10]+ predprob[predprob=11]
+```
+
