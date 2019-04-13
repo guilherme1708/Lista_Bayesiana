@@ -1,0 +1,91 @@
+---
+title: "Lista 2 - MAE0524"
+author: 'Guilherme Navarro NºUSP:8943160 e Leonardo NUSP: 9793436'
+output:
+  pdf_document: default
+---
+
+4) Suponha que as observações a seguir são uma amostra de uma v.a. Normal com média ($\mu$) e variância ($\sigma²$) desconhecidas.
+16.6 16.4 17.3 14.5 15.3 15.2
+18.1 17.6 17.6 16.3 15.4 17.2
+a) Use o LearnBayes para desenhar o gráfico de contornos da distribuição a posteriori conjunta de ($\mu$,$\sigma^2$), considerando a distribuição a priori não informativa de Jeffreys h($\mu$,$\sigma^2$) = $\frac{1}{\sigma^2}$
+
+###Resolução
+
+```{r echo=F}
+library(LearnBayes)
+
+x <- c(16.6,16.4,17.3,14.5,15.3,15.2,18.1,17.6,17.6,16.3,15.4,17.2)
+
+sd<-normpostsim(x,prior=NULL,m=1000)
+
+
+d <- mycontour(normchi2post, c(13,20, 0.1, 7), x,xlab="mean",ylab="variance")
+S = sum((x - mean(x))^2)
+n = length(x)
+sigma2 = S/rchisq(1000, n - 1)
+```
+
+b) Simule uma amostra de tamanho 1000 dessa distribuição e inclua esses
+valores no gráfico de contornos.
+
+###Resolução
+
+```{r echo=F}
+d <- mycontour(normchi2post, c(13,20, 0.1, 7), x,xlab="mean",ylab="variance")
+mu = rnorm(1000, mean = mean(x), sd = sqrt(sigma2)/sqrt(n))
+points(mu, sigma2)
+```
+
+Usando o método de Monte Carlo e a amostra simulada, encontre:
+
+c) os intervalos a posteriori de probabilidade 0.90 para a média ($\mu$) e
+desvio padrão ($\sigma$) populacionais
+
+###Resolução
+
+IC para $\mu$:
+```{r echo=F}
+quantile(mu, c(0.05, 0.95))
+```
+
+IC para $\sigma^2$:
+```{r echo=F}
+quantile(sqrt(sigma2), c(0.05, 0.95))
+```
+
+8) Suponha uma amostra aleatória y1, . . . , yn de uma distribuição Cauchy
+não centrada com parâmetro de localização $\theta$ e parâmetro de escala igual a 1.
+Se a priori uma distribuição uniforme (imprópria) é assumida para $\theta$ então a
+densidade a posteriori é proporcional a
+$$\prod_{i=1}^n \frac{1}{1+(y_{i}-\theta)²}$$
+Considere como resultado experimental y = (0, 10, 9, 8, 11, 3, 3, 8, 8, 11) .
+a) Use comandos do R para determinar uma grade de valores entre -2 e
+12 com distanciamento de 0.1.
+
+###Resolução
+
+```{r}
+x <- seq(from=-2,to=12,by=0.1)
+```
+
+b) Determine a densidade a posteriori aproximada usando essa grade de
+valores. Desenhe essa densidade
+
+###Resolução
+O ponto máximo da densidade é representado quando $\widehat\theta$ é igual a 8.2.
+
+```{r echo=F}
+y <- c(0,10,9,8,11,3,3,8,8,11)
+
+prod <- rep(0,141)
+for(j in 1:141){
+  for (i in 1:10){
+    prod[j] <- prod[j] + 1/(1+(y[i]-x[j])^2)
+  }
+}
+plot(dcauchy(x,8.2,1),xlab="Grade de valores",ylab="Densidade")
+
+```
+
+
