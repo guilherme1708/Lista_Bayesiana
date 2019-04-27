@@ -1,0 +1,122 @@
+---
+title: "Anexos"
+author: "Guilherme Navarro NºUSP:8943160 e Leonardo NUSP: 9793436"
+header-includes:
+   - \usepackage{ragged2e}
+output: pdf_document
+---
+
+# Exercício 5
+
+Considere $X_i|\lambda \sim Exp(\lambda), i=1,2,..,n$ ind. e $\lambda \sim Gama(a,b)$.
+
+(c) A partir da aproximação normal obtida em (b), obtenha a distribuição a posteriori aproximada para $\lambda$.
+
+### Resolução
+
+Como $\phi |x_i \overset{a}{\approx} N(ln(\frac{A}{B}),\frac{1}{B})$ logo $\phi=ln(\lambda) \Rightarrow \lambda = e^{\phi}$ Pelo teorema de tranformação de variáveis utilizando o método jacobiano, temos:
+$$f_\lambda(ln(\lambda))=f_\phi(ln(\lambda))|\frac{d\phi}{d\lambda}| \propto \frac{1}{A}e^{-\frac{1}{2A}(ln(\lambda)-ln(\frac{A}{B}))^2}*|\frac{1}{\lambda}|  \propto \frac{1}{A\lambda}e^{-\frac{1}{2A}(ln(\lambda)-ln(\frac{A}{B}))^2}\ (I)$$
+Substituindo os valores em (I)
+$$\frac{1}{(a+n)\lambda}e^{-\frac{1}{2(a+n)}(ln(\lambda)-ln(\frac{a+n}{b+n\bar{x}}))^2} \ (I)$$ 
+Porém (I) é o núcleo da distribuição log-Normal, com isso temos que a partir da distribuição a posteriori obtida no item b, a distribuição a posteriori para $\lambda$ é $Log-Normal(ln(\frac{a+n}{b+n\bar{x}}),\frac{1}{a+n})$
+
+(d) Para $n=10$ e $x=(8, 23, 22, 2, 4, 3, 11, 4, 23, 21)$, obtenha as distribuições a posteriori de $\lambda$ exata e aproximadas. Usando o programa **R**, desenhe essas densidades em um gráfico e compare. Considere que a priori $\mathbb{E}[\lambda]=1$ e $Var[\lambda]=10$.
+
+### Resolução
+
+Considerando que a priori $\mathbb{E}[\lambda]=1$ e $Var[\lambda]=10$, logo como sabemos que a distribuição gamma $\mathbb{E}[\lambda]=\frac{a}{b}$ e $Var[\lambda]=\frac{a}{b^2}$. Temos que:
+$\mathbb{E}[\lambda]=\frac{a}{b}=1$ e $Var[\lambda]=\frac{a}{b^2}=10$
+$$\Rightarrow \left\{ \begin{array}{ll}
+a=b \\ 
+a=10b^2 \end{array} \right.\ \Rightarrow a=b=\frac{1}{10}$$
+Logo a distribuição a priori para $\lambda \sim Gamma(0.1,0.1)$. Assim do item a), temos a sguinte distribuição a posteriori $\lambda|x_i \sim Gamma(A,B)$ onde:
+$$\left\{ \begin{array}{ll}
+A= a+n \\ 
+B=b+ \sum_{i=1}^{n} x_i \end{array} \right. \Rightarrow \left\{ \begin{array}{ll}
+A=0.1+10=10.1 \\ 
+B=0.1+121=121.1 \end{array} \right.$$ Logo a distribuição a posteriori exata é $\lambda|x_i \sim Gamma(10.1,121.1)$
+
+Agora a calulando a deistribuição a posteriori aproximada, temos:
+do item a) temos que a aproixmação da normal para $\lambda|x_i$ é $N(\frac{A-1}{B},\frac{A-1}{B^2}) \Rightarrow \lambda|x_i \overset{a}{\approx} N(0.075,0.025^2)$.
+
+Logo podemos concluir que a aproximação pela normal é até que razoávelmente boa.
+
+\center
+```{r, echo=F, out.width='70%'}
+dados <- c(8, 23, 22, 2, 4, 3, 11, 4, 23, 21)
+
+a <- 1/10
+b <- 1/10
+n <- length(dados)
+x.bar <- mean(dados)
+A <- a+n
+B <- b+n*x.bar
+
+curve(dgamma(x,A,B),ylim=c(0,17), from=0, to=0.2, ylab="Densidade a Posteriori",xlab=expression(lambda))
+curve(dnorm(x,(A-1)/(B),sqrt(A-1)/(B)),lwd=2,col=1,lty=2,add = T)
+curve(dlnorm(x,log(A/B),1/sqrt(A)),lwd=2,col=1,lty=6,add = T)
+l <- c("Gama","Normal","Log-Normal")
+legend("topright",l,lwd=2,lty=c(1,2,6),bty="n",cex=1.2)
+
+```
+\justify
+
+
+# Exercício 6
+
+Utilizar os dados dos tempos associados aos maratonistas de Nova York (marathontimes). Considere agora uma distribuição a priori informativa para média $\mu \sim N(300, 100)$ e uma não informativa para variância $f(\sigma^2) 	\propto \frac{1}{\sigma^2}$. Além disso, suponha independência entre elas.
+
+(a)  Escreva uma função no **R** para calcular o logaritimo da posteriori. Desenhe os gráficos de contornos dessa posteriori (usar *mycontour*).
+
+### Resolução
+
+Sendo X os dados, considerando uma distribuição a posteriori para $\mu$ e $\sigma^2$ como $$f(\mu,\sigma^2|X) \propto \frac{1}{(\sigma^2)^{\frac{n}{2}}}e^{-\frac{1}{2\sigma^2}\sum^n_{i=1}(x_i-\mu)^2}\frac{1}{\sigma^2}e^{\frac{(\mu-300)^2}{200}}=\frac{1}{(\sigma^2)^{\frac{n}{2}+1}}e^{-\frac{1}{2\sigma^2}\sum^n_{i=1}(x_i-\mu)^2-\frac{(\mu-300)^2}{200}}$$
+
+```{r}
+library(LearnBayes)
+log_posterior <- function(theta,dados){ # log da posteriori de theta
+    n <- length(dados) # tamanho dos dados
+    mu <- theta[1] # parametro mu
+    sigma2 <- theta[2] # parametro sigma²
+    x <- dados # dados
+    -n/2*log(sigma2)-1/(2*sigma2)*sum((x-mu)^2)-log(sigma2)-(mu-300)^2/200
+    }
+```
+\center
+```{r, echo=F, out.width='70%'}
+data("marathontimes")
+attach(marathontimes)
+mycontour(log_posterior,c(240,330, 100, 10000), time, xlab = "Média", ylab = "Variância",
+          main = "Gráfico de contornos")
+```
+\justify
+
+(b) Simular 1000 valores dessa distribuição a posteiori e incluir no gráfico.
+
+### Resolução
+\center
+```{r, echo=F, out.width='70%'}
+n <- length(time) # Tamanho da amostra
+var <- (n-1)*var(time) # soma dos desvio da média ao quadrado
+sigma2 <- var/rchisq(1000, n-1) # simulando variâncias
+mu <- rnorm(1000, mean = mean(time), sd = sqrt(sigma2/n)) # simulando médias
+mycontour(log_posterior, c(220, 330, 50, 10000), time, xlab = "Média", ylab = "Variância",
+          main = "Gráfico de contornos com simulação")
+points(mu, sigma2) # Colocando os pontos no gráfico
+
+```
+\justify
+
+\newpage
+(c) Seja $CV =\frac{\sigma}{\mu}$ o coeficiente de variação populacional. Utilizando os valores simulados anteriormente, estimar $CV$. Apresente os quantis de ordem 0.05, 0.25, 0.50, 0.75 e 0.95 da distribuição a posteriori de $CV$. Desenhe o histograma dos valores simulados dessa a posteriori (observe que esse histograma é uma estimativa da densidade a posteriori de $CV$).
+
+### Resolução
+\center
+```{r, echo=F, out.width='70%'}
+coefvar <- mu/sqrt(sigma2) # coeficiente de variação
+quantile(coefvar, c(0.05, 0.25, 0.5, 0.75, 0.95)) # quantis pedidos
+hist(coefvar, probability = T, ylab = "Densidade de Frequência",
+     xlab = "Valores do CV", main = "Histograma do Coeficiente de Variação")
+
+```
+
